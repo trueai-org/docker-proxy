@@ -45,6 +45,7 @@ fi
 echo "启动新的容器 ${CONTAINER_NAME}..."
 docker run --name ${CONTAINER_NAME} -d --restart=always \
  -p 8080:8080 \
+ -e TZ=Asia/Shanghai \
  ${IMAGE_NAME}
 if [ $? -ne 0 ]; then
     echo "启动新的容器失败，请手动检查。"

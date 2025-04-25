@@ -2,6 +2,10 @@
 
 自建Docker镜像加速服务。
 
+演示加速地址：<https://docker.qrco.cc>
+
+演示镜像测试：`docker pull docker.qrco.cc/library/redis`
+
 ```bash
 # 1. 第一步启动容器
 docker run --name dp -d --restart=always -p 8080:8080 registry.cn-guangzhou.aliyuncs.com/trueai-org/docker-proxy
