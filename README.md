@@ -2,9 +2,9 @@
 
 自建Docker镜像加速服务。
 
-演示加速地址：<https://docker.qrco.cc>
+镜像加速地址：<https://docker.qrco.cc>
 
-演示镜像测试：`docker pull docker.qrco.cc/library/redis`
+镜像拉取测试：`docker pull docker.qrco.cc/library/redis`
 
 ```bash
 # 1. 第一步启动容器
