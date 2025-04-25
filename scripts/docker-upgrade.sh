@@ -8,11 +8,18 @@ CONTAINER_NAME="docker-proxy"
 echo "开始更新 ${CONTAINER_NAME} 容器..."
 
 # 验证Docker是否安装
-if ! command -v docker &> /dev/null
+if ! command -v docker &> /dev/null && ! command -v docker.io &> /dev/null
 then
-    echo "Docker 未安装，请先安装 Docker。"
-    exit 1
+    # 再尝试查找 docker 可执行文件
+    if [ ! -x /usr/bin/docker ] && [ ! -x /usr/bin/docker.io ]
+    then
+        echo "Docker 未安装，请先安装 Docker。"
+        exit 1
+    fi
 fi
+
+# 如果脚本运行到这里，说明找到了 Docker
+echo "Docker 已安装，继续执行..."
 
 # 拉取最新镜像
 echo "拉取最新的镜像 ${IMAGE_NAME}..."

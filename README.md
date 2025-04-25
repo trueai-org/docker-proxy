@@ -6,7 +6,22 @@
 
 镜像拉取测试：`docker pull docker.qrco.cc/library/redis`
 
+## 功能
+
+一键部署Docker镜像代理服务的功能，支持基于官方Docker Registry的镜像代理。
+
+## 部署
+
 > Docker 版本
+
+```bash
+# 一键升安装脚本
+# 1.首次下载
+wget -O docker-upgrade.sh https://raw.githubusercontent.com/trueai-org/docker-proxy/main/scripts/docker-upgrade.sh && bash docker-upgrade.sh
+
+# 2.更新升级（以后升级只需要执行此脚本即可）
+sh docker-upgrade.sh
+```
 
 ```bash
 # 1. 第一步启动容器
@@ -44,7 +59,6 @@ sudo systemctl daemon-reload
 sudo systemctl restart docker
 ```
 
-
 > Windows 版本
 
 ```bash
@@ -77,6 +91,3 @@ d. 启动方式2: chmod +x run_app_osx.sh && ./run_app_osx.sh
 
 ⚠️ 重要：选择一台国外服务器，并且未被墙。对于域名，无需进行国内备案。你也可以通过一些平台申请免费域名。在一键部署过程中，如果选择安装Caddy，它将自动配置HTTPS。若选择部署Nginx服务，则需要自行申请一个免费的SSL证书，或者通过其他方式来实现SSL加密。
 
-## 功能
-
-一键部署Docker镜像代理服务的功能，支持基于官方Docker Registry的镜像代理。
