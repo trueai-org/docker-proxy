@@ -87,6 +87,28 @@ c. 启动方式1: sh run_app_osx.sh
 d. 启动方式2: chmod +x run_app_osx.sh && ./run_app_osx.sh
 ```
 
+> Registry 配置项 appsettings.json
+
+- `CacheDir`：缓存目录，默认值为 `./cache`。
+- `CacheTTL`：文件缓存过期时间，单位为秒，默认值为 `604800`（7天）。
+- `Timeout`：请求超时时间，单位为毫秒，默认值为 `30000`（30秒）。
+- `MemoryLimit`：内存限制，单位为MB，默认值为 `128`（128MB）。
+- `BufferSize`：缓冲区大小，单位为字节，默认值为 `8192`（8KB）。
+- `Username`：Docker Hub 用户名，默认值为空，采用登录方式可提升拉取速度。
+- `Password`：密码，默认值为空，采用登录方式可提升拉取速度。
+
+```json
+{
+    "CacheDir": "./cache",
+    "CacheTTL": 604800,
+    "Timeout": 30000,
+    "MemoryLimit": 128,
+    "BufferSize": 8192,
+    "Username": "",
+    "Password": ""
+}
+```
+
 ## 准备
 
 ⚠️ 重要：选择一台国外服务器，并且未被墙。对于域名，无需进行国内备案。你也可以通过一些平台申请免费域名。在一键部署过程中，如果选择安装Caddy，它将自动配置HTTPS。若选择部署Nginx服务，则需要自行申请一个免费的SSL证书，或者通过其他方式来实现SSL加密。

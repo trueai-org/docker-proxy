@@ -104,15 +104,10 @@ namespace DockerProxy
                 //app.UseMiddleware<ErrorHandlingMiddleware>();
 
                 // Start the application
-                Log.Information("Docker Registry Mirror starting on port {Port}", config.Port);
                 Log.Information($"Cache directory: {config.CacheDir}");
                 Log.Information($"Memory limit: {config.MemoryLimit} MB");
 
-#if DEBUG
-                app.Run($"http://0.0.0.0:{config.Port}");
-#else
                 app.Run();
-#endif
             }
             catch (Exception ex)
             {
