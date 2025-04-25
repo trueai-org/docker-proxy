@@ -11,7 +11,7 @@ namespace DockerProxy.Controllers
     {
         private readonly DockerRegistryService _registryService;
         private readonly AppConfig _config;
-        private readonly DateTime _startTime = DateTime.UtcNow;
+        private static readonly DateTime _startTime = DateTime.UtcNow;
 
         public RegistryController(DockerRegistryService registryService, IOptions<AppConfig> config)
         {
@@ -29,7 +29,7 @@ namespace DockerProxy.Controllers
                 status = "ok",
                 version = "4.0.1",
                 timestamp = DateTime.UtcNow,
-                uptime = (int)(DateTime.UtcNow - _startTime).TotalSeconds,
+                uptime = (int)(DateTime.UtcNow - _startTime).TotalSeconds + " s",
                 memoryLimit = $"{_config.MemoryLimit} MB",
                 author = "trueai-org"
             };
