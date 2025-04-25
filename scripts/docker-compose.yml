@@ -1,0 +1,10 @@
+version: '3'
+services:
+  mjopen:
+    image: registry.cn-guangzhou.aliyuncs.com/trueai-org/docker-proxy
+    container_name: docker-proxy
+    restart: always
+    environment:
+      - TZ=Asia/Shanghai
+    ports:
+      - "8080:8080"
