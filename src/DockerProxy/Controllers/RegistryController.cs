@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Serilog;
-using System.Text.RegularExpressions;
 
 namespace DockerProxy.Controllers
 {

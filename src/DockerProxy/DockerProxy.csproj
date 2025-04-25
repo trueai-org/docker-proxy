@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
@@ -9,6 +9,10 @@
 		<EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
 		<SatelliteResourceLanguages>zh-Hans</SatelliteResourceLanguages>
 		<DockerfileContext>..\..</DockerfileContext>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<NoWarn>1701;1702;1591;1572;1573;</NoWarn>
 	</PropertyGroup>
 
 	<ItemGroup>
