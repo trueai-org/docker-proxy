@@ -6,6 +6,8 @@
 
 镜像拉取测试：`docker pull docker.qrco.cc/library/redis`
 
+> Docker 版本
+
 ```bash
 # 1. 第一步启动容器
 docker run --name dp -d --restart=always -p 8080:8080 registry.cn-guangzhou.aliyuncs.com/trueai-org/docker-proxy
@@ -40,6 +42,35 @@ sudo vi /etc/docker/daemon.json
 
 sudo systemctl daemon-reload
 sudo systemctl restart docker
+```
+
+
+> Windows 版本
+
+```bash
+a. 通过 https://github.com/trueai-org/docker-proxy/releases 下载 windows 最新免安装版，例如：midjourney-proxy-win-x64.zip
+b. 解压并执行 DockerProxy.exe
+c. 打开网站 http://localhost:8080
+```
+
+> Linux 版本
+
+```bash
+a. 通过 https://github.com/trueai-org/docker-proxy/releases 下载 linux 最新免安装版，例如：midjourney-proxy-linux-x64.zip
+b. 解压到当前目录: tar -xzf docker-proxy-linux-x64-<VERSION>.tar.gz
+c. 执行: run_app.sh
+c. 启动方式1: sh run_app.sh
+d. 启动方式2: chmod +x run_app.sh && ./run_app.sh
+```
+
+> macOS 版本
+
+```bash
+a. 通过 https://github.com/trueai-org/docker-proxy/releases 下载 macOS 最新免安装版，例如：midjourney-proxy-osx-x64.zip
+b. 解压到当前目录: tar -xzf docker-proxy-osx-x64-<VERSION>.tar.gz
+c. 执行: run_app_osx.sh
+c. 启动方式1: sh run_app_osx.sh
+d. 启动方式2: chmod +x run_app_osx.sh && ./run_app_osx.sh
 ```
 
 ## 准备
