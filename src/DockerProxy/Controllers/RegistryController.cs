@@ -24,14 +24,17 @@ namespace DockerProxy.Controllers
         [HttpGet("v1/status")]
         public IActionResult GetStatus()
         {
+            var ip = Request.GetIP();
+
             var status = new
             {
                 status = "ok",
-                version = "1.2.1",
+                version = "1.2.2",
                 timestamp = DateTime.UtcNow,
                 uptime = (int)(DateTime.UtcNow - _startTime).TotalSeconds + " s",
                 memoryLimit = $"{_config.MemoryLimit} MB",
-                author = "trueai-org"
+                author = "trueai-org",
+                ip
             };
 
             return Ok(status);
@@ -48,6 +51,11 @@ namespace DockerProxy.Controllers
         public async Task<IActionResult> HandleV2Request(string path)
         {
             Response.Headers.Append("Docker-Distribution-API-Version", "registry/2.0");
+
+            var url = Request.GetUrl();
+            var ip = Request.GetIP();
+
+            Log.Information("Received request: {Method} {Url} from {IP}", Request.Method, url, ip);
 
             // Handle manifest requests
             var manifestMatch = Regex.Match(path, @"^([^/]+(?:/[^/]+)?)/manifests/(.+)$");
