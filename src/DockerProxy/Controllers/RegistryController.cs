@@ -7,6 +7,7 @@ using Serilog;
 namespace DockerProxy.Controllers
 {
     /// <summary>
+    /// Docker Registry API v2
     /// https://docker-docs.uclv.cu/registry/spec/api/
     /// </summary>
     [ApiController]
@@ -20,13 +21,21 @@ namespace DockerProxy.Controllers
         private readonly TokenService _tokenService;
         private readonly IHttpClientFactory _httpClientFactory;
 
-        public RegistryController(TokenService tokenService, IHttpClientFactory httpClientFactory,
-            DockerRegistryService registryService, IOptions<AppConfig> config)
+        public RegistryController(
+            TokenService tokenService,
+            IHttpClientFactory httpClientFactory,
+            DockerRegistryService registryService,
+            IOptions<AppConfig> config)
         {
             _tokenService = tokenService;
             _httpClientFactory = httpClientFactory;
             _registryService = registryService;
             _config = config.Value;
+
+            var ip = Request.GetIP();
+            var url = Request.GetUrl();
+
+            Log.Information("Received request: {Method} {Url} from {IP}", Request.Method, url, ip);
         }
 
         /// <summary>
@@ -43,7 +52,7 @@ namespace DockerProxy.Controllers
             var status = new
             {
                 status = "ok",
-                version = "1.2.4",
+                version = "1.3.0",
                 timestamp = DateTime.UtcNow,
                 uptime = (int)(DateTime.UtcNow - _startTime).TotalSeconds + " s",
                 memoryLimit = $"{_config.MemoryLimit} MB",
@@ -74,6 +83,7 @@ namespace DockerProxy.Controllers
         [HttpGet("v2/{name}/tags/list")]
         public async Task<IActionResult> ListTags(string name)
         {
+            var ip = Request.GetIP();
             Log.Information("Listing tags for repository: {Repository}", name);
 
             // Format repository name
@@ -144,8 +154,6 @@ namespace DockerProxy.Controllers
 
             var url = Request.GetUrl();
             var ip = Request.GetIP();
-
-            Log.Information("Received request: {Method} {Url} from {IP}", Request.Method, url, ip);
 
             // Handle manifest requests
             var manifestMatch = Regex.Match(path, @"^([^/]+(?:/[^/]+)?)/manifests/(.+)$");

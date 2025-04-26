@@ -94,6 +94,7 @@ d. 启动方式2: chmod +x run_app_osx.sh && ./run_app_osx.sh
 - `Timeout`：请求超时时间，单位为毫秒，默认值为 `30000`（30秒）。
 - `MemoryLimit`：内存限制，单位为MB，默认值为 `128`（128MB）。
 - `BufferSize`：缓冲区大小，单位为字节，默认值为 `8192`（8KB）。
+- `Concurrent`：并发下载数，默认值为 `4`。
 - `Username`：Docker Hub 用户名，默认值为空，采用登录方式可提升拉取速度。
 - `Password`：Docker Hub 密码，默认值为空，采用登录方式可提升拉取速度。
 
@@ -104,6 +105,7 @@ d. 启动方式2: chmod +x run_app_osx.sh && ./run_app_osx.sh
     "Timeout": 30000,
     "MemoryLimit": 128,
     "BufferSize": 8192,
+    "Concurrent": 4,
     "Username": "",
     "Password": ""
 }

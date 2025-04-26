@@ -50,8 +50,21 @@ fi
 
 # 运行新的容器
 echo "启动新的容器 ${CONTAINER_NAME}..."
+
+mkdir -p ./logs
+mkdir -p ./cache
+mkdir -p ./cache/manifests
+mkdir -p ./cache/blobs
+
+# 添加权限修改
+chmod -R 777 ./cache
+chmod -R 777 ./logs
+
 docker run --name ${CONTAINER_NAME} -d --restart=always \
  -p 8080:8080 \
+ -v ./logs:/app/logs:rw \
+ -v ./cache:/app/cache:rw \
+ -v ./appsettings.json:/app/appsettings.json:ro \
  -e TZ=Asia/Shanghai \
  ${IMAGE_NAME}
 if [ $? -ne 0 ]; then

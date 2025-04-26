@@ -6,6 +6,11 @@
     public class AppConfig
     {
         /// <summary>
+        /// 演示环境
+        /// </summary>
+        public bool IsDemo { get; set; } = false;
+
+        /// <summary>
         /// 缓存目录
         /// </summary>
         public string CacheDir { get; set; } = "./cache";
@@ -29,6 +34,11 @@
         /// 缓冲区大小（字节）
         /// </summary>
         public int BufferSize { get; set; } = 8192; // 8 KB
+
+        /// <summary>
+        /// 并发下载数量
+        /// </summary>
+        public int Concurrent { get; set; } = 4;
 
         /// <summary>
         /// Optional credentials for Docker Hub (for higher rate limits)

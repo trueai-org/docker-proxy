@@ -90,7 +90,7 @@ namespace DockerProxy
                 app.UseSerilogRequestLogging();
 
                 // Configure the HTTP request pipeline.
-                if (app.Environment.IsDevelopment())
+                if (app.Environment.IsDevelopment() || config.IsDemo)
                 {
                     app.UseSwagger();
                     app.UseSwaggerUI();

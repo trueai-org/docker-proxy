@@ -19,7 +19,11 @@ namespace DockerProxy
             _tokenService = tokenService;
             _httpClientFactory = httpClientFactory;
             _config = config.Value;
-            _concurrencySemaphore = new SemaphoreSlim(4, 4); // Allow 4 concurrent requests
+
+            // Allow 4 concurrent requests
+            var core = Math.Max(1, _config.Concurrent);
+
+            _concurrencySemaphore = new SemaphoreSlim(core, core);
         }
 
         public async Task<RegistryResponse> GetManifestAsync(string repository, string reference)
