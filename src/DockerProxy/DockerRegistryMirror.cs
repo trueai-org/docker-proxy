@@ -112,6 +112,20 @@ namespace DockerProxy
 
                 return result;
             }
+            catch (TaskCanceledException)
+            {
+                Log.Error("Request timed out for manifest: {Repository}:{Reference}", repository, reference);
+
+                // Return a timeout error in proper Docker format
+                return new RegistryResponse
+                {
+                    StatusCode = 408, // Request Timeout
+                    ContentType = "application/json",
+                    Content = new MemoryStream(Encoding.UTF8.GetBytes(
+                        $"{{\"errors\":[{{\"code\":\"MANIFEST_TIMEOUT\",\"message\":\"Request for {repository}:{reference} timed out\"}}]}}"
+                    ))
+                };
+            }
             catch (Exception ex)
             {
                 Log.Error(ex, "Error getting manifest for {Repository}:{Reference}", repository, reference);

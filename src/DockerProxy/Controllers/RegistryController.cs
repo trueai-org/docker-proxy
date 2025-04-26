@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Serilog;
@@ -39,7 +40,15 @@ namespace DockerProxy.Controllers
 
             return Ok(status);
         }
-
+        /// <summary>
+        /// official Docker Registry API v2 only specifies these core endpoints
+        /// /v2/ - API version check
+        /// /v2/<name>/manifests/<reference> - For manifest operations
+        /// /v2/<name>/blobs/<digest> - For blob operations
+        /// /v2/<name>/tags/list - List tags
+        /// /v2/_catalog - List repositories
+        /// </summary>
+        /// <returns></returns>
         [HttpGet("v2")]
         public IActionResult HandleV2Root()
         {
@@ -107,17 +116,71 @@ namespace DockerProxy.Controllers
             {
                 if (response.StatusCode != 200)
                 {
-                    // 配置输出类型
-                    if (!string.IsNullOrWhiteSpace(response.ContentType))
+                    // For JSON error responses, we need to read the content stream and return it correctly
+                    if (response.ContentType.Contains("application/json"))
                     {
-                        Response.ContentType = response.ContentType;
+                        // Read the stream into a string
+                        string errorContent;
+                        using (var reader = new StreamReader(response.Content))
+                        {
+                            errorContent = reader.ReadToEnd();
+                        }
+
+                        // IMPORTANT: Set content type header properly
+                        Response.ContentType = "application/json";
+
+                        // Return a ContentResult to ensure we have control over the exact response format
+                        return StatusCode(response.StatusCode, new ContentResult
+                        {
+                            Content = errorContent,
+                            ContentType = "application/json",
+                            StatusCode = response.StatusCode
+                        });
                     }
                     else
                     {
-                        Response.ContentType = "application/json";
+                        // For non-JSON errors, use the standard approach
+                        byte[] buffer = new byte[response.Content.Length];
+                        response.Content.Read(buffer, 0, buffer.Length);
+                        response.Content.Dispose();
+
+                        return StatusCode(response.StatusCode, buffer);
                     }
 
-                    return StatusCode(response.StatusCode, response.Content);
+                    //// 配置输出类型
+                    //if (!string.IsNullOrWhiteSpace(response.ContentType))
+                    //{
+                    //    Response.ContentType = response.ContentType;
+                    //}
+                    //else
+                    //{
+                    //    Response.ContentType = "application/json";
+                    //}
+
+                    //return StatusCode(response.StatusCode, response.Content);
+
+                    //// For JSON error responses, we need to read the content stream and return it correctly
+                    //if (response.ContentType.Contains("application/json"))
+                    //{
+                    //    // Read the stream into a string
+                    //    string errorContent;
+                    //    using (var reader = new StreamReader(response.Content))
+                    //    {
+                    //        errorContent = reader.ReadToEnd();
+                    //    }
+
+                    //    // Return a proper error response with the correct status code
+                    //    return StatusCode(response.StatusCode, errorContent);
+                    //}
+                    //else
+                    //{
+                    //    // For non-JSON errors, use the standard approach
+                    //    byte[] buffer = new byte[response.Content.Length];
+                    //    response.Content.Read(buffer, 0, buffer.Length);
+                    //    response.Content.Dispose();
+
+                    //    return StatusCode(response.StatusCode, buffer);
+                    //}
                 }
 
                 // IMPORTANT: Use different approach based on stream type
