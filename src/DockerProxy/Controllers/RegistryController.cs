@@ -29,7 +29,7 @@ namespace DockerProxy.Controllers
             var status = new
             {
                 status = "ok",
-                version = "1.2.2",
+                version = "1.2.3",
                 timestamp = DateTime.UtcNow,
                 uptime = (int)(DateTime.UtcNow - _startTime).TotalSeconds + " s",
                 memoryLimit = $"{_config.MemoryLimit} MB",
@@ -107,6 +107,16 @@ namespace DockerProxy.Controllers
             {
                 if (response.StatusCode != 200)
                 {
+                    // 配置输出类型
+                    if (!string.IsNullOrWhiteSpace(response.ContentType))
+                    {
+                        Response.ContentType = response.ContentType;
+                    }
+                    else
+                    {
+                        Response.ContentType = "application/json";
+                    }
+
                     return StatusCode(response.StatusCode, response.Content);
                 }
 
