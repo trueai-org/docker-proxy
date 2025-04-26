@@ -6,6 +6,8 @@
 
 镜像拉取测试：`docker pull docker.qrco.cc/library/redis`
 
+镜像加速文档：<https://docker.qrco.cc/swagger>
+
 ## 功能
 
 一键部署Docker镜像代理服务的功能，支持基于官方Docker Registry的镜像代理。

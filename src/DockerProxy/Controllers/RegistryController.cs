@@ -31,11 +31,6 @@ namespace DockerProxy.Controllers
             _httpClientFactory = httpClientFactory;
             _registryService = registryService;
             _config = config.Value;
-
-            var ip = Request.GetIP();
-            var url = Request.GetUrl();
-
-            Log.Information("Received request: {Method} {Url} from {IP}", Request.Method, url, ip);
         }
 
         /// <summary>
@@ -70,6 +65,11 @@ namespace DockerProxy.Controllers
         [HttpGet("v2")]
         public IActionResult HandleV2Root()
         {
+            var ip = Request.GetIP();
+            var url = Request.GetUrl();
+
+            Log.Information("Received request: {Method} {Url} from {IP}", Request.Method, url, ip);
+
             Response.Headers.Append("Docker-Distribution-API-Version", "registry/2.0");
             return Ok(new { });
         }
@@ -84,6 +84,10 @@ namespace DockerProxy.Controllers
         public async Task<IActionResult> ListTags(string name)
         {
             var ip = Request.GetIP();
+            var url = Request.GetUrl();
+
+            Log.Information("Received request: {Method} {Url} from {IP}", Request.Method, url, ip);
+
             Log.Information("Listing tags for repository: {Repository}", name);
 
             // Format repository name
@@ -127,6 +131,11 @@ namespace DockerProxy.Controllers
         [HttpGet("v2/_catalog")]
         public IActionResult ListRepositories()
         {
+            var ip = Request.GetIP();
+            var url = Request.GetUrl();
+
+            Log.Information("Received request: {Method} {Url} from {IP}", Request.Method, url, ip);
+
             Log.Information("Listing repositories");
 
             // This is trickier because we can't easily proxy to Docker Hub for this
@@ -150,10 +159,12 @@ namespace DockerProxy.Controllers
         [HttpGet("v2/{**path}")]
         public async Task<IActionResult> HandleV2Request(string path)
         {
-            Response.Headers.Append("Docker-Distribution-API-Version", "registry/2.0");
-
-            var url = Request.GetUrl();
             var ip = Request.GetIP();
+            var url = Request.GetUrl();
+
+            Log.Information("Received request: {Method} {Url} from {IP}", Request.Method, url, ip);
+
+            Response.Headers.Append("Docker-Distribution-API-Version", "registry/2.0");
 
             // Handle manifest requests
             var manifestMatch = Regex.Match(path, @"^([^/]+(?:/[^/]+)?)/manifests/(.+)$");
