@@ -47,7 +47,7 @@ namespace DockerProxy.Controllers
             var status = new
             {
                 status = "ok",
-                version = "1.3.0",
+                version = "1.3.1",
                 timestamp = DateTime.UtcNow,
                 uptime = (int)(DateTime.UtcNow - _startTime).TotalSeconds + " s",
                 memoryLimit = $"{_config.MemoryLimit} MB",
