@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -6,6 +6,9 @@ using Serilog;
 
 namespace DockerProxy.Controllers
 {
+    /// <summary>
+    /// https://docker-docs.uclv.cu/registry/spec/api/
+    /// </summary>
     [ApiController]
     [Route("/")]
     public class RegistryController : ControllerBase
@@ -14,12 +17,22 @@ namespace DockerProxy.Controllers
         private readonly AppConfig _config;
         private static readonly DateTime _startTime = DateTime.UtcNow;
 
-        public RegistryController(DockerRegistryService registryService, IOptions<AppConfig> config)
+        private readonly TokenService _tokenService;
+        private readonly IHttpClientFactory _httpClientFactory;
+
+        public RegistryController(TokenService tokenService, IHttpClientFactory httpClientFactory,
+            DockerRegistryService registryService, IOptions<AppConfig> config)
         {
+            _tokenService = tokenService;
+            _httpClientFactory = httpClientFactory;
             _registryService = registryService;
             _config = config.Value;
         }
 
+        /// <summary>
+        /// 非官方的 Docker Registry API v2 规范
+        /// </summary>
+        /// <returns></returns>
         [HttpGet()]
         [HttpGet("status")]
         [HttpGet("v1/status")]
@@ -40,22 +53,90 @@ namespace DockerProxy.Controllers
 
             return Ok(status);
         }
+
         /// <summary>
-        /// official Docker Registry API v2 only specifies these core endpoints
-        /// /v2/ - API version check
-        /// /v2/<name>/manifests/<reference> - For manifest operations
-        /// /v2/<name>/blobs/<digest> - For blob operations
-        /// /v2/<name>/tags/list - List tags
-        /// /v2/_catalog - List repositories
+        /// official Docker Registry API v2
         /// </summary>
         /// <returns></returns>
         [HttpGet("v2")]
         public IActionResult HandleV2Root()
         {
             Response.Headers.Append("Docker-Distribution-API-Version", "registry/2.0");
-            return Ok();
+            return Ok(new { });
         }
 
+        /// <summary>
+        /// official Docker Registry API v2
+        /// List tags for a repository
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        [HttpGet("v2/{name}/tags/list")]
+        public async Task<IActionResult> ListTags(string name)
+        {
+            Log.Information("Listing tags for repository: {Repository}", name);
+
+            // Format repository name
+            if (!name.Contains("/"))
+            {
+                name = $"library/{name}";
+            }
+
+            // Get token
+            string scope = $"repository:{name}:pull";
+            string token = await _tokenService.GetTokenAsync(scope);
+
+            if (string.IsNullOrEmpty(token))
+            {
+                return Unauthorized(new
+                {
+                    errors = new[] { new { code = "UNAUTHORIZED", message = "Authentication required" } }
+                });
+            }
+
+            // Forward to Docker Hub
+            var client = _httpClientFactory.CreateClient("registry");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await client.GetAsync($"https://registry-1.docker.io/v2/{name}/tags/list");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return StatusCode((int)response.StatusCode, await response.Content.ReadAsStringAsync());
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+            return Content(content, "application/json");
+        }
+
+        /// <summary>
+        /// official Docker Registry API v2
+        /// List repositories
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("v2/_catalog")]
+        public IActionResult ListRepositories()
+        {
+            Log.Information("Listing repositories");
+
+            // This is trickier because we can't easily proxy to Docker Hub for this
+            // Instead, return just the repositories we've cached locally
+            var dirs = new DirectoryInfo(Path.Combine(_config.CacheDir, "manifests"))
+                .EnumerateFiles("*", SearchOption.AllDirectories)
+                .Select(f => Path.GetFileNameWithoutExtension(f.Name))
+                .Distinct()
+                .ToList();
+
+            return Ok(new { repositories = dirs });
+        }
+
+        /// <summary>
+        /// official Docker Registry API v2
+        /// /v2/name/manifests/reference - For manifest operations
+        /// /v2/name/blobs/digest - For blob operations
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
         [HttpGet("v2/{**path}")]
         public async Task<IActionResult> HandleV2Request(string path)
         {
@@ -116,48 +197,48 @@ namespace DockerProxy.Controllers
             {
                 if (response.StatusCode != 200)
                 {
-                    // For JSON error responses, we need to read the content stream and return it correctly
-                    if (response.ContentType.Contains("application/json"))
+                    // 配置输出类型
+                    if (!string.IsNullOrWhiteSpace(response.ContentType))
                     {
-                        // Read the stream into a string
-                        string errorContent;
-                        using (var reader = new StreamReader(response.Content))
-                        {
-                            errorContent = reader.ReadToEnd();
-                        }
-
-                        // IMPORTANT: Set content type header properly
-                        Response.ContentType = "application/json";
-
-                        // Return a ContentResult to ensure we have control over the exact response format
-                        return StatusCode(response.StatusCode, new ContentResult
-                        {
-                            Content = errorContent,
-                            ContentType = "application/json",
-                            StatusCode = response.StatusCode
-                        });
+                        Response.ContentType = response.ContentType;
                     }
                     else
                     {
-                        // For non-JSON errors, use the standard approach
-                        byte[] buffer = new byte[response.Content.Length];
-                        response.Content.Read(buffer, 0, buffer.Length);
-                        response.Content.Dispose();
-
-                        return StatusCode(response.StatusCode, buffer);
+                        Response.ContentType = "application/json";
                     }
 
-                    //// 配置输出类型
-                    //if (!string.IsNullOrWhiteSpace(response.ContentType))
+                    return StatusCode(response.StatusCode, response.Content);
+
+                    //// For JSON error responses, we need to read the content stream and return it correctly
+                    //if (response.ContentType.Contains("application/json"))
                     //{
-                    //    Response.ContentType = response.ContentType;
+                    //    // Read the stream into a string
+                    //    string errorContent;
+                    //    using (var reader = new StreamReader(response.Content))
+                    //    {
+                    //        errorContent = reader.ReadToEnd();
+                    //    }
+
+                    //    // IMPORTANT: Set content type header properly
+                    //    Response.ContentType = "application/json";
+
+                    //    // Return a ContentResult to ensure we have control over the exact response format
+                    //    return StatusCode(response.StatusCode, new ContentResult
+                    //    {
+                    //        Content = errorContent,
+                    //        ContentType = "application/json",
+                    //        StatusCode = response.StatusCode
+                    //    });
                     //}
                     //else
                     //{
-                    //    Response.ContentType = "application/json";
-                    //}
+                    //    // For non-JSON errors, use the standard approach
+                    //    byte[] buffer = new byte[response.Content.Length];
+                    //    response.Content.Read(buffer, 0, buffer.Length);
+                    //    response.Content.Dispose();
 
-                    //return StatusCode(response.StatusCode, response.Content);
+                    //    return StatusCode(response.StatusCode, buffer);
+                    //}
 
                     //// For JSON error responses, we need to read the content stream and return it correctly
                     //if (response.ContentType.Contains("application/json"))
