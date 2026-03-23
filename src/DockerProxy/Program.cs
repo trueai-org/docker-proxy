@@ -1,6 +1,7 @@
-using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Serilog;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.Extensions.Configuration;
+using Serilog;
 
 namespace DockerProxy
 {
@@ -16,12 +17,18 @@ namespace DockerProxy
                 builder.Configuration.AddJsonFile("appsettings.json", optional: false);
 
                 // Register configuration
-                var cfg = builder.Configuration.GetSection("Registry");
-                builder.Services.Configure<AppConfig>(cfg);
+                var appOpt = builder.Configuration.GetSection("Registry");
+                builder.Services.Configure<AppConfig>(appOpt);
+
+                var consulOpt = builder.Configuration.GetSection(nameof(ConsulOptions));
+                builder.Services.Configure<ConsulOptions>(consulOpt);
+
+                var consulValue = new ConsulOptions();
+                consulOpt.Bind(consulValue);
 
                 // Load configuration
                 var config = new AppConfig();
-                cfg.Bind(config);
+                appOpt.Bind(config);
 
                 // 从配置中读取 Serilog 设置
                 builder.Host.UseSerilog((context, services, configuration) => configuration
@@ -62,8 +69,14 @@ namespace DockerProxy
                     AutomaticDecompression = System.Net.DecompressionMethods.All
                 });
 
+                // 添加健康检查
+                builder.Services.AddHealthChecks();
+
                 builder.Services.AddSingleton<TokenService>();
                 builder.Services.AddSingleton<DockerRegistryService>();
+
+                // 注册 Consul
+                builder.Services.AddSingleton<ConsulService>();
 
                 builder.Services.AddHostedService<CacheCleanupService>();
 
@@ -99,6 +112,43 @@ namespace DockerProxy
                 app.UseAuthorization();
 
                 app.MapControllers();
+                app.MapHealthChecks("/health");
+
+                var applicationLifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
+                applicationLifetime.ApplicationStarted.Register(async () =>
+                {
+                    Log.Information("应用程序已启动...");
+                    try
+                    {
+                        if (consulValue?.Enable == true && consulValue.IsValid)
+                        {
+                            var consulService = app.Services.GetRequiredService<ConsulService>();
+                            await consulService.RegisterServiceAsync();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, "注册服务到 Consul 失败");
+                    }
+                });
+                // 自动注销 Consul
+                applicationLifetime.ApplicationStopping.Register(async () =>
+                {
+                    Log.Information("应用程序正在停止...");
+                    try
+                    {
+                        if (consulValue?.Enable == true && consulValue.IsValid)
+                        {
+                            var consulService = app.Services.GetRequiredService<ConsulService>();
+                            await consulService.DeregisterServiceAsync();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, "从 Consul 注销服务失败");
+                    }
+                });
+
 
                 // Configure pipeline
                 //app.UseMiddleware<ErrorHandlingMiddleware>();
