@@ -2,11 +2,11 @@
 
 自建Docker镜像加速服务。
 
-镜像加速地址：<https://docker.qrco.cc>
+镜像加速地址：<https://docker.trueai.org>
 
-镜像拉取测试：`docker pull docker.qrco.cc/library/redis`
+镜像拉取测试：`docker pull docker.trueai.org/library/redis`
 
-镜像加速文档：<https://docker.qrco.cc/swagger>
+镜像加速文档：<https://docker.trueai.org/swagger>
 
 ## 功能
 
